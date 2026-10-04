@@ -1,0 +1,41 @@
+name: CI
+
+on: [push, workflow_dispatch]
+
+jobs:
+  test-compile-arduino:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build all environments
+        run: pio run
+
+#      - name: Run unit tests (native)
+#        run: pio test -e uno_q
+  test-clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install clang-format
+      - name: Check formatting of all files
+        run: |
+          git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp' '*.ino' \
+            | xargs --no-run-if-empty clang-format --dry-run --Werror --style=file
